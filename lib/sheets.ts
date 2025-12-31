@@ -15,23 +15,20 @@ const SHEET_NAME = 'AirQuality'
 
 export async function getHistoricalData(days: number = 30): Promise<HistoricalRecord[]> {
   try {
+    console.log('Reading from sheet:', SHEET_ID, SHEET_NAME)
+    
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: `${SHEET_NAME}!A:I`,
     })
 
     const rows = response.data.values
+    console.log('Rows found:', rows?.length || 0)
+    
     if (!rows || rows.length === 0) return []
 
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - days)
-
-    // 檢查第一列是否為標題列
-    const firstRow = rows[0]
-    const isHeader = firstRow[0] === 'ID' || firstRow[0] === 'id'
-    const dataRows = isHeader ? rows.slice(1) : rows
-
-    return dataRows.map((row: string[]) => ({
+    // 直接返回所有資料，不做日期過濾
+    return rows.map((row: string[]) => ({
       id: row[0] || '',
       sitename: row[1] || '',
       county: row[2] || '',
@@ -41,11 +38,7 @@ export async function getHistoricalData(days: number = 30): Promise<HistoricalRe
       pm10: parseFloat(row[6]) || 0,
       o3: parseFloat(row[7]) || 0,
       timestamp: row[8] || '',
-    })).filter(record => {
-      if (!record.timestamp) return true // 保留沒有時間戳的資料
-      const recordDate = new Date(record.timestamp)
-      return !isNaN(recordDate.getTime()) && recordDate >= cutoffDate
-    })
+    })).filter(record => record.sitename) // 只過濾掉沒有站名的空行
   } catch (error) {
     console.error('Error reading from Google Sheets:', error)
     return []

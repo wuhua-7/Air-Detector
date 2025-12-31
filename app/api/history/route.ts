@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchHistoricalAirQuality } from '@/lib/airQuality'
+import { getHistoricalData } from '@/lib/sheets'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const county = searchParams.get('county')
     const site = searchParams.get('site')
-    const month = searchParams.get('month') // 格式: 2025_12
 
-    // 直接從環境部 API 抓取歷史資料
-    let data = await fetchHistoricalAirQuality(month || undefined)
+    // 從試算表讀取歷史資料
+    let data = await getHistoricalData(30)
 
     if (county) {
       data = data.filter(r => r.county === county)
