@@ -65,7 +65,7 @@ export async function saveAirQualityData(records: HistoricalRecord[]): Promise<b
 export async function initializeSheet(): Promise<void> {
   try {
     const response = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID })
-    const sheetExists = response.data.sheets?.some((s: { properties?: { title?: string } }) => s.properties?.title === SHEET_NAME)
+    const sheetExists = response.data.sheets?.some((s) => s.properties?.title === SHEET_NAME)
 
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
