@@ -15,20 +15,18 @@ const SHEET_NAME = 'AirQuality'
 
 export async function getHistoricalData(days: number = 30): Promise<HistoricalRecord[]> {
   try {
-    console.log('Reading from sheet:', SHEET_ID, SHEET_NAME)
-    
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: `${SHEET_NAME}!A:I`,
     })
 
     const rows = response.data.values
-    console.log('Rows found:', rows?.length || 0)
-    
-    if (!rows || rows.length === 0) return []
+    if (!rows || rows.length <= 1) return []
 
-    // 直接返回所有資料，不做日期過濾
-    return rows.map((row: string[]) => ({
+    // 跳過標題列，從第二列開始
+    const dataRows = rows.slice(1)
+
+    return dataRows.map((row: string[]) => ({
       id: row[0] || '',
       sitename: row[1] || '',
       county: row[2] || '',
@@ -38,7 +36,7 @@ export async function getHistoricalData(days: number = 30): Promise<HistoricalRe
       pm10: parseFloat(row[6]) || 0,
       o3: parseFloat(row[7]) || 0,
       timestamp: row[8] || '',
-    })).filter(record => record.sitename) // 只過濾掉沒有站名的空行
+    })).filter(record => record.sitename) // 過濾空行
   } catch (error) {
     console.error('Error reading from Google Sheets:', error)
     return []
