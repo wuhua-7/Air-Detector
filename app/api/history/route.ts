@@ -21,11 +21,14 @@ export async function GET(request: NextRequest) {
     data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
     return NextResponse.json({ success: true, data, total: data.length })
-  } catch (error) {
-    console.error('History API Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch historical data', data: [] },
-      { status: 200 }
-    )
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error('History API Error:', err)
+    return NextResponse.json({
+      success: false,
+      error: err.message || 'Failed to fetch historical data',
+      stack: err.stack,
+      data: []
+    })
   }
 }

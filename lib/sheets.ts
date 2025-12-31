@@ -14,33 +14,28 @@ const SHEET_ID = process.env.GOOGLE_SHEET_ID!
 const SHEET_NAME = 'AirQuality'
 
 export async function getHistoricalData(days: number = 30): Promise<HistoricalRecord[]> {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: `${SHEET_NAME}!A:I`,
-    })
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${SHEET_NAME}!A:I`,
+  })
 
-    const rows = response.data.values
-    if (!rows || rows.length <= 1) return []
+  const rows = response.data.values
+  if (!rows || rows.length <= 1) return []
 
-    // 跳過標題列，從第二列開始
-    const dataRows = rows.slice(1)
+  // 跳過標題列，從第二列開始
+  const dataRows = rows.slice(1)
 
-    return dataRows.map((row: string[]) => ({
-      id: row[0] || '',
-      sitename: row[1] || '',
-      county: row[2] || '',
-      aqi: parseInt(row[3]) || 0,
-      status: row[4] || '',
-      pm25: parseFloat(row[5]) || 0,
-      pm10: parseFloat(row[6]) || 0,
-      o3: parseFloat(row[7]) || 0,
-      timestamp: row[8] || '',
-    })).filter(record => record.sitename) // 過濾空行
-  } catch (error) {
-    console.error('Error reading from Google Sheets:', error)
-    return []
-  }
+  return dataRows.map((row: string[]) => ({
+    id: row[0] || '',
+    sitename: row[1] || '',
+    county: row[2] || '',
+    aqi: parseInt(row[3]) || 0,
+    status: row[4] || '',
+    pm25: parseFloat(row[5]) || 0,
+    pm10: parseFloat(row[6]) || 0,
+    o3: parseFloat(row[7]) || 0,
+    timestamp: row[8] || '',
+  })).filter(record => record.sitename) // 過濾空行
 }
 
 export async function saveAirQualityData(records: HistoricalRecord[]): Promise<boolean> {
