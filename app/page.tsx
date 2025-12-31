@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { AirQualityData, HistoricalRecord } from '@/lib/types'
+import { useRouter } from 'next/navigation'
 import AqiCard from '@/components/AqiCard'
 import HistoryChart from '@/components/HistoryChart'
 import HistoryTable from '@/components/HistoryTable'
@@ -9,6 +10,7 @@ import HistoryTable from '@/components/HistoryTable'
 type Tab = 'realtime' | 'history'
 
 export default function Home() {
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>('realtime')
   const [currentData, setCurrentData] = useState<AirQualityData[]>([])
   const [historyData, setHistoryData] = useState<HistoricalRecord[]>([])
@@ -148,7 +150,7 @@ export default function Home() {
         ) : tab === 'realtime' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredData.map((d, i) => (
-              <AqiCard key={d.siteid || i} data={d} onClick={() => setSelectedSite(d.sitename)} />
+              <AqiCard key={d.siteid || i} data={d} onClick={() => router.push(`/station/${d.siteid}`)} />
             ))}
           </div>
         ) : (

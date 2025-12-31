@@ -9,8 +9,8 @@ export async function GET() {
   } catch (error) {
     console.error('API Error:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch air quality data' },
-      { status: 500 }
+      { success: false, error: 'Failed to fetch air quality data', data: [] },
+      { status: 200 }
     )
   }
 }
@@ -25,13 +25,14 @@ export async function POST() {
     
     return NextResponse.json({ 
       success, 
-      message: success ? `Saved ${records.length} records` : 'Failed to save'
+      message: success ? `已儲存 ${records.length} 筆資料到試算表` : '儲存失敗',
+      count: records.length
     })
   } catch (error) {
     console.error('Save Error:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to save data' },
-      { status: 500 }
+      { success: false, error: '儲存失敗，請確認 API Key 和試算表設定' },
+      { status: 200 }
     )
   }
 }
