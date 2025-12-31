@@ -2,6 +2,7 @@ import { AirQualityData, ApiResponse, HistoricalRecord } from './types'
 
 const API_BASE = 'https://data.moenv.gov.tw/api/v2'
 const DATASET_ID = 'aqx_p_432'
+const HISTORY_DATASET_ID = 'aqx_p_488' // 歷史資料
 
 export async function fetchCurrentAirQuality(): Promise<AirQualityData[]> {
   const apiKey = process.env.MOENV_API_KEY
@@ -14,6 +15,48 @@ export async function fetchCurrentAirQuality(): Promise<AirQualityData[]> {
 
   const data: ApiResponse = await response.json()
   return data.records || []
+}
+
+// 從環境部 API 抓取歷史資料
+export async function fetchHistoricalAirQuality(yearMonth?: string): Promise<HistoricalRecord[]> {
+  const apiKey = process.env.MOENV_API_KEY
+  if (!apiKey) return []
+
+  try {
+    // 如果沒指定月份，抓最近一個月的資料
+    const months = yearMonth ? [yearMonth] : getLastMonths(1)
+    const allRecords: HistoricalRecord[] = []
+
+    for (const month of months) {
+      const url = `${API_BASE}/${HISTORY_DATASET_ID}?api_key=${apiKey}&limit=1000&format=json&year_month=${month}`
+      
+      const response = await fetch(url, { next: { revalidate: 3600 } }) // 1小時快取
+      if (!response.ok) continue
+
+      const data = await response.json()
+      const records = (data.records || []).map((d: AirQualityData) => transformToHistoricalRecord(d))
+      allRecords.push(...records)
+    }
+
+    return allRecords
+  } catch (error) {
+    console.error('Error fetching historical data:', error)
+    return []
+  }
+}
+
+function getLastMonths(count: number): string[] {
+  const months: string[] = []
+  const now = new Date()
+  
+  for (let i = 0; i < count; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    months.push(`${year}_${month}`)
+  }
+  
+  return months
 }
 
 export function transformToHistoricalRecord(data: AirQualityData): HistoricalRecord {
