@@ -131,6 +131,17 @@ export default function StationPage() {
           <p className="text-sm text-gray-400 mt-4">
             更新時間：{station.publishtime}
           </p>
+
+          {station.latitude && station.longitude && (
+            <a
+              href={`https://www.google.com/maps?q=${station.latitude},${station.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              📍 在 Google Maps 查看位置
+            </a>
+          )}
         </div>
 
         {history.length > 0 && (

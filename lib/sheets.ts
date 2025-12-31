@@ -45,7 +45,19 @@ export async function getHistoricalData(days: number = 30): Promise<HistoricalRe
 
 export async function saveAirQualityData(records: HistoricalRecord[]): Promise<boolean> {
   try {
-    const values = records.map((r: HistoricalRecord) => [
+    // 先讀取現有資料，避免重複
+    const existing = await getHistoricalData(60)
+    const existingIds = new Set(existing.map(r => r.id))
+    
+    // 只儲存新資料
+    const newRecords = records.filter(r => !existingIds.has(r.id))
+    
+    if (newRecords.length === 0) {
+      console.log('No new records to save')
+      return true
+    }
+
+    const values = newRecords.map((r: HistoricalRecord) => [
       r.id, r.sitename, r.county, r.aqi, r.status, r.pm25, r.pm10, r.o3, r.timestamp
     ])
 
@@ -55,10 +67,54 @@ export async function saveAirQualityData(records: HistoricalRecord[]): Promise<b
       valueInputOption: 'USER_ENTERED',
       requestBody: { values },
     })
+    
+    console.log(`Saved ${newRecords.length} new records`)
     return true
   } catch (error) {
     console.error('Error writing to Google Sheets:', error)
     return false
+  }
+}
+
+// 清理超過30天的舊資料
+export async function cleanOldData(): Promise<void> {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A:I`,
+    })
+
+    const rows = response.data.values
+    if (!rows || rows.length <= 1) return
+
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - 30)
+
+    const header = rows[0]
+    const validRows = rows.slice(1).filter((row: string[]) => {
+      const timestamp = row[8]
+      if (!timestamp) return false
+      return new Date(timestamp) >= cutoffDate
+    })
+
+    // 清空並重寫
+    await sheets.spreadsheets.values.clear({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A:I`,
+    })
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A1`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [header, ...validRows],
+      },
+    })
+
+    console.log(`Cleaned old data, kept ${validRows.length} records`)
+  } catch (error) {
+    console.error('Error cleaning old data:', error)
   }
 }
 

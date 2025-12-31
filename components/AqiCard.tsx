@@ -12,6 +12,10 @@ export default function AqiCard({ data, onClick }: Props) {
   const aqi = parseInt(data.aqi) || 0
   const color = getAqiColor(aqi)
 
+  const mapUrl = data.latitude && data.longitude
+    ? `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
+    : null
+
   return (
     <div
       onClick={onClick}
@@ -49,9 +53,22 @@ export default function AqiCard({ data, onClick }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 mt-3">
-        更新: {data.publishtime}
-      </p>
+      <div className="flex justify-between items-center mt-3">
+        <p className="text-xs text-gray-400">
+          更新: {data.publishtime}
+        </p>
+        {mapUrl && (
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs text-blue-500 hover:underline"
+          >
+            📍 地圖
+          </a>
+        )}
+      </div>
     </div>
   )
 }
