@@ -21,12 +21,17 @@ export async function getHistoricalData(days: number = 30): Promise<HistoricalRe
     })
 
     const rows = response.data.values
-    if (!rows || rows.length <= 1) return []
+    if (!rows || rows.length === 0) return []
 
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - days)
 
-    return rows.slice(1).map((row: string[]) => ({
+    // 檢查第一列是否為標題列
+    const firstRow = rows[0]
+    const isHeader = firstRow[0] === 'ID' || firstRow[0] === 'id'
+    const dataRows = isHeader ? rows.slice(1) : rows
+
+    return dataRows.map((row: string[]) => ({
       id: row[0] || '',
       sitename: row[1] || '',
       county: row[2] || '',
@@ -36,7 +41,11 @@ export async function getHistoricalData(days: number = 30): Promise<HistoricalRe
       pm10: parseFloat(row[6]) || 0,
       o3: parseFloat(row[7]) || 0,
       timestamp: row[8] || '',
-    })).filter(record => new Date(record.timestamp) >= cutoffDate)
+    })).filter(record => {
+      if (!record.timestamp) return true // 保留沒有時間戳的資料
+      const recordDate = new Date(record.timestamp)
+      return !isNaN(recordDate.getTime()) && recordDate >= cutoffDate
+    })
   } catch (error) {
     console.error('Error reading from Google Sheets:', error)
     return []
