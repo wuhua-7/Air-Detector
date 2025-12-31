@@ -1,8 +1,2 @@
 {
-  "crons": [
-    {
-      "path": "/api/air-quality",
-      "schedule": "0 * * * *"
-    }
-  ]
 }
